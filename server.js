@@ -1,55 +1,97 @@
-// Start of server
-
-app.listen(PORT, () => console.log(`Listening on PORT: ${PORT}`));
-
-// Var to refer back to
+// Dependencies
+// =============================================================
 const express = require("express");
-const path = require('path');
-let dbJson = require('./Develop/db/db.json')
+const { v4: uuidv4 } = require('uuid');
+const fs = require("fs");
+const dbJSON = require("../02-Homework/Develop/db/db.json"); // change later
+const path = require("path");
 
-// app and port
+// Sets up the Express App
+// =============================================================
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 3000;
 
-// creating backend routes
-
+// Sets up the Express app to handle data parsing
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static("develop/public"));
+app.use(express.static("public"));
 
 
 
-app.get('/api/notes', function (req, res) {
-    res.send(dbJson)
+// Routes
+// =============================================================
+
+// Basic route that sends the user first to the AJAX Page
+
+app.get("/", function(req, res) {
+  res.sendFile(path.join(__dirname,"/Develop/public/index.html"));
+});
+app.get("/notes", function(req, res) {
+  res.sendFile(path.join(__dirname,"/Develop/public/notes.html"));
+});
+app.get("/api/notes", function(req, res) {
+  res.json(dbJSON);
 });
 
 
-app.get('/',function (req, res) {
-    res.sendFile(path.join(__dirname, 'develop/public/notes.html'))
+app.post("/note", function(req, res) {
+  // Validate request body
+  if(!req.body.title) {
+    return res.json({error: "Missing required title"});
+  }
+
+  // Copy request body and generate ID
+  const note = {...req.body, id: uuidv4()}
+
+  // Push note to dbJSON array - saves data in memory
+  dbJSON.push(note);
+
+  // Saves data to file by persisting in memory variable dbJSON to db.json file.
+  // This is needed because when we turn off server we loose all memory data like pbJSON variable.
+  // Saving to file allows us to read previous notes (before server was shutdown) from file.
+  fs.writeFile(path.join(__dirname, "../02-Homework/Develop/db/db.json"), JSON.stringify(dbJSON), (err) => { 
+    if (err) {
+      return res.json({error: "Error writing to file"});
+    }
+
+    return res.json(note);
+  });
+});
+
+app.delete("/api/notes/:id",function(req,res){
+  let newId=req.params.id;
+  dbJSON=dbJSON.filter(function(note){
+    if(newId !==note.id){
+      return true;
+    }
+    else  {
+      return false;
+  }
+});
+console.log(dbJSON);
+fs.writeFile("../02-Homework/Develop/db/db.json",JSON.stringify(dbJSON),function(error){
+  if(error)
+    throw error;
+    return res.json(true);
+});
+});
+
+app.get("*", function(req, res) {
+  res.sendFile(path.join(__dirname,"../02-Homework/public/index.html"));
 });
 
 
-// talk to notes html
 
-app.get('/takeNotes', function (req, res) {
-    res.sendFile(path.join(__dirname, 'develop/public/notes.html'))
+// Starts the server to begin listening
+// =============================================================
+app.listen(PORT, function() {
+  console.log("App listening on PORT " + PORT);
 });
 
 
-app.post('/api/notes', function (req, res) {
-    let newNote = req.body
-    dbJson.push(req.body)
-    res.send(true)
-});
 
-// to delete 
 
-app.delete('/api/notes/:id', function (req, res) {
-    console.log(req.params.id)
-    const myId= dbJson.findIndex (item => { item.id == req.params.id});
-    console.log(myId);
-    dbJson.splice(myId,1);
-    console.log(dbjson)
-    res.json(true)
-});
+
+
+
 
