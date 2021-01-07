@@ -49,7 +49,7 @@ app.post("/note", function(req, res) {
   // Saves data to file by persisting in memory variable dbJSON to db.json file.
   // This is needed because when we turn off server we loose all memory data like pbJSON variable.
   // Saving to file allows us to read previous notes (before server was shutdown) from file.
-  fs.writeFile(path.join(__dirname, "../02-Homework/Develop/db/db.json"), JSON.stringify(dbJSON), (err) => { 
+  fs.writeFile(path.join(__dirname, "/db.json"), JSON.stringify(dbJSON), (err) => { 
     if (err) {
       return res.json({error: "Error writing to file"});
     }
@@ -77,7 +77,7 @@ fs.writeFile("../02-Homework/Develop/db/db.json",JSON.stringify(dbJSON),function
 });
 
 app.get("*", function(req, res) {
-  res.sendFile(path.join(__dirname,"../02-Homework/public/index.html"));
+  res.sendFile(path.join(__dirname,"/index.html"));
 });
 
 
